@@ -1,0 +1,17 @@
+# Root
+.env
+*.log
+
+# Java / Maven
+medstock-backend/target/
+medstock-backend/.mvn/wrapper/maven-wrapper.jar
+
+# Node / Vite
+medstock-frontend/node_modules/
+medstock-frontend/dist/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,35 @@
+CREATE TABLE IF NOT EXISTS subscriptions (
+    id BIGSERIAL PRIMARY KEY,
+    store_id BIGINT NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
+    plan_code VARCHAR(40) NOT NULL,
+    billing_cycle VARCHAR(20) NOT NULL DEFAULT 'MONTHLY',
+    amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+    currency VARCHAR(10) NOT NULL DEFAULT 'INR',
+    status VARCHAR(30) NOT NULL DEFAULT 'TRIAL',
+    started_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS payment_events (
+    id BIGSERIAL PRIMARY KEY,
+    store_id BIGINT NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
+    subscription_id BIGINT REFERENCES subscriptions(id) ON DELETE SET NULL,
+    provider VARCHAR(40) NOT NULL DEFAULT 'RAZORPAY',
+    provider_payment_id VARCHAR(120),
+    event_type VARCHAR(60) NOT NULL,
+    amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+    payload JSONB,
+    status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS email_verification_tokens (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token VARCHAR(180) NOT NULL UNIQUE,
+    expires_at TIMESTAMP NOT NULL,
+    consumed_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
