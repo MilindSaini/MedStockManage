@@ -1,13 +1,48 @@
+import { Navigate, Route, Routes } from 'react-router-dom';
+import ProtectedRoute from './components/ProtectedRoute';
+import { AuthProvider } from './context/AuthContext';
+import AdminDashboard from './pages/AdminDashboard';
+import EmployeeDashboard from './pages/EmployeeDashboard';
+import LoginPage from './pages/LoginPage';
+import OwnerDashboard from './pages/OwnerDashboard';
+import RegisterPage from './pages/RegisterPage';
+
 function App() {
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto max-w-3xl p-8">
-        <h1 className="text-3xl font-bold">MedStock Phase 1 Ready</h1>
-        <p className="mt-3 text-slate-300">
-          Frontend base scaffold is complete. Phase 2 will add auth pages and route guards.
-        </p>
-      </div>
-    </main>
+    <AuthProvider>
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+
+        <Route
+          path="/owner"
+          element={(
+            <ProtectedRoute allowedRoles={["OWNER"]}>
+              <OwnerDashboard />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/employee"
+          element={(
+            <ProtectedRoute allowedRoles={["EMPLOYEE"]}>
+              <EmployeeDashboard />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/admin"
+          element={(
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          )}
+        />
+
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </AuthProvider>
   );
 }
 

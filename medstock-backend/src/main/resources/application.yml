@@ -2,11 +2,30 @@ spring:
   application:
     name: medstock-backend
 
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${medstock.env.google-client-id}
+            client-secret: ${medstock.env.google-client-secret}
+            redirect-uri: ${medstock.env.google-redirect-uri}
+            scope:
+              - email
+              - profile
+
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/medstock}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    url: ${medstock.env.db-url}
+    username: ${medstock.env.db-username}
+    password: ${medstock.env.db-password}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      data-source-properties:
+        # Supabase transaction pooling does not support server-side prepared statements.
+        prepareThreshold: 0
+        preparedStatementCacheQueries: 0
+        preparedStatementCacheSizeMiB: 0
+        preferQueryMode: simple
 
   jpa:
     hibernate:
@@ -14,20 +33,24 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        default_schema: ${medstock.db.schema}
     open-in-view: false
 
   flyway:
     enabled: true
-    baseline-on-migrate: true
+    create-schemas: true
+    default-schema: ${medstock.db.schema}
+    schemas: ${medstock.db.schema}
+    baseline-on-migrate: false
     locations: classpath:db/migration
     placeholders:
-      adminSeedPassword: ${ADMIN_SEED_PASSWORD:ChangeMeStrong123!}
+      adminSeedPassword: ${medstock.env.admin-seed-password}
 
   mail:
-    host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:}
-    password: ${MAIL_PASSWORD:}
+    host: ${medstock.env.mail-host}
+    port: ${medstock.env.mail-port}
+    username: ${medstock.env.mail-username}
+    password: ${medstock.env.mail-password}
     properties:
       mail:
         smtp:
@@ -36,22 +59,61 @@ spring:
             enable: true
 
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${medstock.env.server-port}
 
 aws:
-  region: ${AWS_REGION:ap-south-1}
+  region: ${medstock.env.aws-region}
   s3:
-    bucket: ${AWS_S3_BUCKET:medstock-photos}
+    bucket: ${medstock.env.aws-s3-bucket}
   credentials:
-    access-key: ${AWS_ACCESS_KEY_ID:}
-    secret-key: ${AWS_SECRET_ACCESS_KEY:}
+    access-key: ${medstock.env.aws-access-key-id}
+    secret-key: ${medstock.env.aws-secret-access-key}
 
 medstock:
+  db:
+    schema: ${MEDSTOCK_DB_SCHEMA:medstock}
+  env:
+    db-url: ${MEDSTOCK_DB_URL}
+    db-username: ${MEDSTOCK_DB_USERNAME}
+    db-password: ${MEDSTOCK_DB_PASSWORD}
+    google-client-id: ${MEDSTOCK_GOOGLE_CLIENT_ID}
+    google-client-secret: ${MEDSTOCK_GOOGLE_CLIENT_SECRET}
+    google-redirect-uri: ${MEDSTOCK_GOOGLE_REDIRECT_URI:http://localhost:8080/login/oauth2/code/google}
+    admin-seed-password: ${MEDSTOCK_ADMIN_SEED_PASSWORD}
+    mail-host: ${MEDSTOCK_MAIL_HOST}
+    mail-port: ${MEDSTOCK_MAIL_PORT}
+    mail-username: ${MEDSTOCK_MAIL_USERNAME}
+    mail-password: ${MEDSTOCK_MAIL_PASSWORD}
+    server-port: ${MEDSTOCK_SERVER_PORT}
+    aws-region: ${MEDSTOCK_AWS_REGION}
+    aws-s3-bucket: ${MEDSTOCK_AWS_S3_BUCKET}
+    aws-access-key-id: ${MEDSTOCK_AWS_ACCESS_KEY_ID}
+    aws-secret-access-key: ${MEDSTOCK_AWS_SECRET_ACCESS_KEY}
+    jwt-issuer: ${MEDSTOCK_JWT_ISSUER}
+    jwt-access-token-minutes: ${MEDSTOCK_JWT_ACCESS_TOKEN_MINUTES}
+    jwt-refresh-token-days: ${MEDSTOCK_JWT_REFRESH_TOKEN_DAYS}
+    jwt-private-key: ${MEDSTOCK_JWT_PRIVATE_KEY:}
+    jwt-public-key: ${MEDSTOCK_JWT_PUBLIC_KEY:}
+    jwt-allow-ephemeral-keys: ${MEDSTOCK_JWT_ALLOW_EPHEMERAL_KEYS:false}
+    jwt-refresh-cookie-secure: ${MEDSTOCK_JWT_REFRESH_COOKIE_SECURE:false}
+    jwt-refresh-cookie-same-site: ${MEDSTOCK_JWT_REFRESH_COOKIE_SAME_SITE:Lax}
+    oauth2-success-redirect: ${MEDSTOCK_OAUTH2_SUCCESS_REDIRECT}
+    cors-allowed-origins: ${MEDSTOCK_CORS_ALLOWED_ORIGINS}
   security:
+    jwt:
+      issuer: ${medstock.env.jwt-issuer}
+      access-token-minutes: ${medstock.env.jwt-access-token-minutes}
+      refresh-token-days: ${medstock.env.jwt-refresh-token-days}
+      private-key: ${medstock.env.jwt-private-key}
+      public-key: ${medstock.env.jwt-public-key}
+      allow-ephemeral-keys: ${medstock.env.jwt-allow-ephemeral-keys}
+      refresh-cookie-secure: ${medstock.env.jwt-refresh-cookie-secure}
+      refresh-cookie-same-site: ${medstock.env.jwt-refresh-cookie-same-site}
+      oauth2-success-redirect: ${medstock.env.oauth2-success-redirect}
     admin:
-      seed-password: ${ADMIN_SEED_PASSWORD:ChangeMeStrong123!}
+      seed-password: ${medstock.env.admin-seed-password}
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+    allowed-origins: ${medstock.env.cors-allowed-origins}
 
 logging:
   level:

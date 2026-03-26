@@ -1,9 +1,11 @@
 # Root
 .env
+medstock-backend/.env
 *.log
 
 # Java / Maven
 medstock-backend/target/
+medstock-backend/.m2/
 medstock-backend/.mvn/wrapper/maven-wrapper.jar
 
 # Node / Vite
