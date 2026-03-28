@@ -7,20 +7,28 @@ import java.util.List;
 public record AuthUserResponse(
     Long id,
     Long storeId,
+    String storeName,
     String username,
     String email,
     String fullName,
+    String phone,
     String role,
     List<String> roles
 ) {
     public static AuthUserResponse from(User user) {
+        return from(user, null);
+    }
+
+    public static AuthUserResponse from(User user, String storeName) {
         List<String> roles = RoleUtils.parseRoles(user.getRole());
         return new AuthUserResponse(
             user.getId(),
             user.getStoreId(),
+            storeName,
             user.getUsername(),
             user.getEmail(),
             user.getFullName(),
+            user.getPhone(),
             RoleUtils.primaryRole(roles),
             roles
         );

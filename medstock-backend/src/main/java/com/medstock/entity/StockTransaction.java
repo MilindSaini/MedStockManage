@@ -13,31 +13,30 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "stores")
-public class Store {
+@Table(name = "stock_transactions")
+public class StockTransaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "store_id", nullable = false)
+    private Long storeId;
+
+    @Column(name = "medicine_id", nullable = false)
+    private Long medicineId;
+
+    @Column(name = "user_id")
+    private Long userId;
+
+    @Column(name = "transaction_type", nullable = false)
+    private String transactionType;
+
     @Column(nullable = false)
-    private String name;
+    private Integer delta;
 
-    @Column(name = "address")
-    private String address;
-
-    @Column(name = "owner_user_id")
-    private Long ownerUserId;
-
-    @Column(name = "subscription_status", nullable = false)
-    private String subscriptionStatus = "TRIAL";
-
-    @Column(name = "trial_ends_at")
-    private LocalDateTime trialEndsAt;
+    private String notes;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
 }

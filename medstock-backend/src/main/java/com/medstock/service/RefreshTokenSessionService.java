@@ -45,6 +45,14 @@ public class RefreshTokenSessionService {
         refreshTokenSessionRepository.revokeToken(tokenId, userId, Instant.now());
     }
 
+    @Transactional
+    public void revokeAllActiveSessionsForUser(Long userId) {
+        if (userId == null) {
+            return;
+        }
+        refreshTokenSessionRepository.revokeAllActiveByUserId(userId, Instant.now());
+    }
+
     private String hash(String value) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");

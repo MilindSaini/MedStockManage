@@ -110,15 +110,12 @@ export function AuthProvider({ children }) {
         }
       } catch {
         if (!cancelled) {
-          const hasExistingSession = Boolean(accessToken) && Boolean(user);
-          if (!hasExistingSession) {
-            setAccessToken(null);
-            setUser(null);
-            setActiveRole(null);
-            localStorage.removeItem(ACTIVE_ROLE_STORAGE_KEY);
-            localStorage.removeItem(HAS_SESSION_STORAGE_KEY);
-            clearTokens();
-          }
+          setAccessToken(null);
+          setUser(null);
+          setActiveRole(null);
+          localStorage.removeItem(ACTIVE_ROLE_STORAGE_KEY);
+          localStorage.removeItem(HAS_SESSION_STORAGE_KEY);
+          clearTokens();
         }
       } finally {
         if (!cancelled) {
@@ -181,6 +178,18 @@ export function AuthProvider({ children }) {
     return response.data;
   }
 
+  async function refreshMe() {
+    const response = await axiosInstance.get('/api/auth/me');
+    setUser(response.data);
+    return response.data;
+  }
+
+  async function updateProfile(payload) {
+    const response = await axiosInstance.put('/api/auth/profile', payload);
+    setUser(response.data);
+    return response.data;
+  }
+
   function switchRole(nextRole) {
     const roles = normalizeRoles(user);
     if (!roles.includes(nextRole)) {
@@ -224,6 +233,8 @@ export function AuthProvider({ children }) {
       logout,
       completeOAuthLogin,
       completeOwnerProfile,
+      refreshMe,
+      updateProfile,
       switchRole,
     }),
     [accessToken, user, activeRole, roles, isAuthReady]

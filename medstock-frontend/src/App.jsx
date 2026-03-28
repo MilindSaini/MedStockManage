@@ -1,10 +1,17 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
+import AppNavbar from './components/AppNavbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
+import AddMedicinePage from './pages/AddMedicinePage';
 import AdminDashboard from './pages/AdminDashboard';
+import AlertsPage from './pages/AlertsPage';
 import EmployeeDashboard from './pages/EmployeeDashboard';
+import EmployeesPage from './pages/EmployeesPage';
+import InventoryPage from './pages/InventoryPage';
 import LoginPage from './pages/LoginPage';
 import OwnerDashboard from './pages/OwnerDashboard';
+import OutOfStockPage from './pages/OutOfStockPage';
+import ProfilePage from './pages/ProfilePage';
 import RegisterPage from './pages/RegisterPage';
 
 function App() {
@@ -19,7 +26,10 @@ function App() {
           path="/owner"
           element={(
             <ProtectedRoute allowedRoles={["OWNER"]}>
-              <OwnerDashboard />
+              <>
+                <AppNavbar />
+                <OwnerDashboard />
+              </>
             </ProtectedRoute>
           )}
         />
@@ -27,7 +37,10 @@ function App() {
           path="/employee"
           element={(
             <ProtectedRoute allowedRoles={["EMPLOYEE"]}>
-              <EmployeeDashboard />
+              <>
+                <AppNavbar />
+                <EmployeeDashboard />
+              </>
             </ProtectedRoute>
           )}
         />
@@ -35,7 +48,77 @@ function App() {
           path="/admin"
           element={(
             <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <AdminDashboard />
+              <>
+                <AppNavbar />
+                <AdminDashboard />
+              </>
+            </ProtectedRoute>
+          )}
+        />
+
+        <Route
+          path="/inventory"
+          element={(
+            <ProtectedRoute allowedRoles={["OWNER", "EMPLOYEE"]}>
+              <>
+                <AppNavbar />
+                <InventoryPage />
+              </>
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/inventory/add"
+          element={(
+            <ProtectedRoute allowedRoles={["OWNER", "EMPLOYEE"]}>
+              <>
+                <AppNavbar />
+                <AddMedicinePage />
+              </>
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/alerts"
+          element={(
+            <ProtectedRoute allowedRoles={["OWNER", "EMPLOYEE"]}>
+              <>
+                <AppNavbar />
+                <AlertsPage />
+              </>
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/out-of-stock"
+          element={(
+            <ProtectedRoute allowedRoles={["OWNER", "EMPLOYEE"]}>
+              <>
+                <AppNavbar />
+                <OutOfStockPage />
+              </>
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/employees"
+          element={(
+            <ProtectedRoute allowedRoles={["OWNER"]}>
+              <>
+                <AppNavbar />
+                <EmployeesPage />
+              </>
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/profile"
+          element={(
+            <ProtectedRoute allowedRoles={["OWNER", "EMPLOYEE", "ADMIN"]}>
+              <>
+                <AppNavbar />
+                <ProfilePage />
+              </>
             </ProtectedRoute>
           )}
         />

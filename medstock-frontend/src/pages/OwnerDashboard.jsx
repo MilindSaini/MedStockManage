@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -6,6 +7,12 @@ export default function OwnerDashboard() {
   const { logout, roles, switchRole } = useAuth();
   const canSwitchToEmployee = roles.includes('EMPLOYEE');
   const canViewAdmin = roles.includes('ADMIN');
+  const [joinAlertMessage, setJoinAlertMessage] = useState('');
+
+  useEffect(() => {
+    const message = sessionStorage.getItem('ownerEmployeeJoinAlert') || '';
+    setJoinAlertMessage(message);
+  }, []);
 
   async function onLogout() {
     await logout();
@@ -50,7 +57,59 @@ export default function OwnerDashboard() {
           </button>
         </div>
       </div>
-      <p className="mt-2 text-slate-300">Phase 2 complete: authenticated owner route.</p>
+
+      <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <button
+          type="button"
+          onClick={() => navigate('/inventory')}
+          className="rounded-lg border border-slate-700 bg-slate-900 p-4 text-left hover:border-slate-500"
+        >
+          <div className="font-medium">Inventory</div>
+          <div className="text-xs text-slate-400">Manage medicines and stock actions</div>
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate('/alerts')}
+          className="rounded-lg border border-slate-700 bg-slate-900 p-4 text-left hover:border-slate-500"
+        >
+          <div className="font-medium">Alerts</div>
+          <div className="text-xs text-slate-400">Expiry and low-stock grouped views</div>
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate('/out-of-stock')}
+          className="rounded-lg border border-slate-700 bg-slate-900 p-4 text-left hover:border-slate-500"
+        >
+          <div className="font-medium">Out of Stock</div>
+          <div className="text-xs text-slate-400">Restock or remove zero-stock medicines</div>
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate('/employees')}
+          className="rounded-lg border border-slate-700 bg-slate-900 p-4 text-left hover:border-slate-500"
+        >
+          <div className="font-medium">Employees</div>
+          <div className="text-xs text-slate-400">Add employees and set permissions</div>
+        </button>
+      </div>
+
+      {joinAlertMessage && (
+        <div className="mt-6 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-amber-100">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <p className="text-sm font-medium">{joinAlertMessage}</p>
+            <button
+              type="button"
+              className="rounded border border-amber-400/60 px-3 py-1 text-xs hover:border-amber-300"
+              onClick={() => {
+                sessionStorage.removeItem('ownerEmployeeJoinAlert');
+                setJoinAlertMessage('');
+              }}
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

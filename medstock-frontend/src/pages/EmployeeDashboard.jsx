@@ -1,20 +1,45 @@
 import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 
 export default function EmployeeDashboard() {
   const navigate = useNavigate();
-  const { logout, roles, switchRole, completeOwnerProfile } = useAuth();
+  const queryClient = useQueryClient();
+  const { logout, roles, switchRole, completeOwnerProfile, refreshMe } = useAuth();
   const [form, setForm] = useState({
     storeName: '',
-    phone: '',
-    fullName: '',
+    storeAddress: '',
   });
   const [submitting, setSubmitting] = useState(false);
   const canSwitchToOwner = roles.includes('OWNER');
   const canViewAdmin = roles.includes('ADMIN');
   const needsOwnerProfile = !roles.includes('OWNER') && !roles.includes('ADMIN');
+
+  const invitationsQuery = useQuery({
+    queryKey: ['employeeInvitations'],
+    queryFn: async () => {
+      const response = await axiosInstance.get('/api/employee-invitations/me');
+      return response.data || [];
+    },
+    staleTime: 20_000,
+  });
+
+  const respondMutation = useMutation({
+    mutationFn: async ({ invitationId, accept }) => axiosInstance.post(`/api/employee-invitations/${invitationId}/respond`, { accept }),
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({ queryKey: ['employeeInvitations'] });
+      if (variables.accept) {
+        await refreshMe();
+        toast.success('Joined store successfully');
+      } else {
+        toast.success('Invitation declined');
+      }
+    },
+    onError: (error) => toast.error(error.response?.data?.message || 'Could not respond to invitation'),
+  });
 
   async function onLogout() {
     await logout();
@@ -30,14 +55,7 @@ export default function EmployeeDashboard() {
       toast.success('Owner profile completed successfully');
       navigate('/owner', { replace: true });
     } catch (error) {
-      const status = error.response?.status;
-      const backendMessage = String(error.response?.data?.message || '').toLowerCase();
-
-      if (status === 409 && backendMessage.includes('phone')) {
-        toast.error('This phone number is already taken. Please use another phone number.');
-      } else {
-        toast.error(error.response?.data?.message || 'Could not complete owner profile');
-      }
+      toast.error(error.response?.data?.message || 'Could not complete owner profile');
     } finally {
       setSubmitting(false);
     }
@@ -88,6 +106,63 @@ export default function EmployeeDashboard() {
 
       <p className="mt-2 text-slate-300">You are logged in as employee.</p>
 
+      {(invitationsQuery.data || []).length > 0 && (
+        <div className="mt-6 space-y-3">
+          {(invitationsQuery.data || []).map((invitation) => (
+            <div key={invitation.id} className="rounded-lg border border-blue-500/40 bg-blue-900/20 p-4">
+              <div className="text-sm text-blue-100">
+                You received a request to join {invitation.storeName || 'a store'}. Do you want to join?
+              </div>
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  className="rounded-md bg-emerald-600 px-3 py-1 text-sm font-medium hover:bg-emerald-500 disabled:opacity-60"
+                  onClick={() => respondMutation.mutate({ invitationId: invitation.id, accept: true })}
+                  disabled={respondMutation.isPending}
+                >
+                  Join
+                </button>
+                <button
+                  type="button"
+                  className="rounded-md border border-rose-500/60 px-3 py-1 text-sm text-rose-200 hover:border-rose-400 disabled:opacity-60"
+                  onClick={() => respondMutation.mutate({ invitationId: invitation.id, accept: false })}
+                  disabled={respondMutation.isPending}
+                >
+                  Decline
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <button
+          type="button"
+          onClick={() => navigate('/inventory')}
+          className="rounded-lg border border-slate-700 bg-slate-900 p-4 text-left hover:border-slate-500"
+        >
+          <div className="font-medium">Inventory</div>
+          <div className="text-xs text-slate-400">Search medicines and adjust stock</div>
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate('/alerts')}
+          className="rounded-lg border border-slate-700 bg-slate-900 p-4 text-left hover:border-slate-500"
+        >
+          <div className="font-medium">Alerts</div>
+          <div className="text-xs text-slate-400">See expiry and low-stock alerts</div>
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate('/out-of-stock')}
+          className="rounded-lg border border-slate-700 bg-slate-900 p-4 text-left hover:border-slate-500"
+        >
+          <div className="font-medium">Out of Stock</div>
+          <div className="text-xs text-slate-400">Restock depleted medicines</div>
+        </button>
+      </div>
+
       {needsOwnerProfile && (
         <div className="mt-8 max-w-xl rounded-lg border border-slate-700 bg-slate-900 p-5">
           <h2 className="text-xl font-semibold">Become a Store Owner</h2>
@@ -103,16 +178,9 @@ export default function EmployeeDashboard() {
             />
             <input
               className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
-              placeholder="Phone number"
-              value={form.phone}
-              onChange={(event) => updateField('phone', event.target.value)}
-              required
-            />
-            <input
-              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
-              placeholder="Full name"
-              value={form.fullName}
-              onChange={(event) => updateField('fullName', event.target.value)}
+              placeholder="Store address"
+              value={form.storeAddress}
+              onChange={(event) => updateField('storeAddress', event.target.value)}
               required
             />
 

@@ -1,6 +1,7 @@
 package com.medstock.repository;
 
 import com.medstock.entity.User;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -13,6 +14,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsernameIgnoreCase(String username);
 
     Optional<User> findByEmailIgnoreCase(String email);
+
+    Optional<User> findByEmailIgnoreCaseAndIdNot(String email, Long id);
 
     @Query("""
         SELECT u FROM User u
@@ -29,4 +32,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByPhone(String phone);
 
     boolean existsByPhoneAndIdNot(String phone, Long id);
+
+    List<User> findByStoreIdAndIsActiveTrue(Long storeId);
 }

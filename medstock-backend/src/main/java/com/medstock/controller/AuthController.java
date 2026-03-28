@@ -6,6 +6,7 @@ import com.medstock.dto.auth.AuthResponse;
 import com.medstock.dto.auth.AuthUserResponse;
 import com.medstock.dto.auth.OwnerProfileRequest;
 import com.medstock.dto.auth.RefreshTokenRequest;
+import com.medstock.dto.auth.UpdateProfileRequest;
 import com.medstock.security.AuthCookieService;
 import com.medstock.security.UserPrincipal;
 import com.medstock.service.AuthService;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -103,6 +105,17 @@ public class AuthController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
         }
         return ResponseEntity.ok(authService.completeOwnerProfile(principal.getUsername(), request));
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<AuthUserResponse> updateProfile(
+        @Valid @RequestBody UpdateProfileRequest request,
+        Authentication authentication
+    ) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof UserPrincipal principal)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+        }
+        return ResponseEntity.ok(authService.updateProfile(principal.getUsername(), request));
     }
 
     @GetMapping("/oauth2/google-url")

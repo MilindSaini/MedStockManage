@@ -6,6 +6,7 @@ import com.medstock.dto.auth.AuthRegisterRequest;
 import com.medstock.dto.auth.AuthResponse;
 import com.medstock.dto.auth.AuthUserResponse;
 import com.medstock.dto.auth.OwnerProfileRequest;
+import com.medstock.dto.auth.UpdateProfileRequest;
 import com.medstock.entity.Store;
 import com.medstock.entity.User;
 import com.medstock.repository.StoreRepository;
@@ -136,7 +137,7 @@ public class AuthService {
         User user = userRepository.findByUsernameOrEmail(normalizedIdentity, normalizedIdentity)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         ensureUserActive(user);
-        return AuthUserResponse.from(user);
+        return toAuthUserResponse(user);
     }
 
     @Transactional
@@ -197,15 +198,11 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "User is already an owner");
         }
 
-        String normalizedPhone = request.phone().trim();
-        if (userRepository.existsByPhoneAndIdNot(normalizedPhone, user.getId())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Phone number already in use");
-        }
-
         LocalDateTime now = LocalDateTime.now();
 
         Store store = new Store();
         store.setName(request.storeName().trim());
+        store.setAddress(request.storeAddress().trim());
         store.setSubscriptionStatus("TRIAL");
         store.setTrialEndsAt(now.plusDays(30));
         store.setCreatedAt(now);
@@ -213,8 +210,6 @@ public class AuthService {
         store = storeRepository.save(store);
 
         user.setStoreId(store.getId());
-        user.setFullName(request.fullName().trim());
-        user.setPhone(normalizedPhone);
         user.setRole(RoleUtils.serializeRoles(RoleUtils.addRole(user.getRole(), "OWNER")));
         user.setUpdatedAt(now);
         user = userRepository.save(user);
@@ -223,11 +218,54 @@ public class AuthService {
         store.setUpdatedAt(now);
         storeRepository.save(store);
 
-        return AuthUserResponse.from(user);
+        return toAuthUserResponse(user);
+    }
+
+    @Transactional
+    public AuthUserResponse updateProfile(String identity, UpdateProfileRequest request) {
+        String normalizedIdentity = normalizeIdentity(identity);
+        User user = userRepository.findByUsernameOrEmail(normalizedIdentity, normalizedIdentity)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        ensureUserActive(user);
+
+        String normalizedPhone = normalizeNullable(request.phone());
+        if (normalizedPhone != null && userRepository.existsByPhoneAndIdNot(normalizedPhone, user.getId())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Phone number already in use");
+        }
+
+        String normalizedStoreName = normalizeNullable(request.storeName());
+        if (normalizedStoreName != null) {
+            if (!RoleUtils.hasRole(user.getRole(), "OWNER")) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only owner can update store name");
+            }
+            if (user.getStoreId() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Owner is not attached to a store");
+            }
+
+            Store store = storeRepository.findById(user.getStoreId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Store not found"));
+            store.setName(normalizedStoreName);
+            store.setUpdatedAt(LocalDateTime.now());
+            storeRepository.save(store);
+        }
+
+        user.setFullName(normalizeNullable(request.fullName()));
+        user.setPhone(normalizedPhone);
+        user.setUpdatedAt(LocalDateTime.now());
+        user = userRepository.save(user);
+
+        return toAuthUserResponse(user);
     }
 
     private AuthResponse issueTokens(User user) {
         ensureUserActive(user);
+
+        if (RoleUtils.parseRoles(user.getRole()).isEmpty()) {
+            user.setRole("EMPLOYEE");
+            user.setUpdatedAt(LocalDateTime.now());
+            user = userRepository.save(user);
+        }
 
         String accessToken = jwtUtil.generateAccessToken(user);
         String refreshTokenId = UUID.randomUUID().toString();
@@ -245,8 +283,18 @@ public class AuthService {
             refreshToken,
             "Bearer",
             jwtUtil.getAccessTokenExpiresInSeconds(),
-            AuthUserResponse.from(user)
+            toAuthUserResponse(user)
         );
+    }
+
+    private AuthUserResponse toAuthUserResponse(User user) {
+        String storeName = null;
+        if (user.getStoreId() != null) {
+            storeName = storeRepository.findById(user.getStoreId())
+                .map(Store::getName)
+                .orElse(null);
+        }
+        return AuthUserResponse.from(user, storeName);
     }
 
     private org.springframework.security.authentication.AuthenticationManager authenticationManager() {

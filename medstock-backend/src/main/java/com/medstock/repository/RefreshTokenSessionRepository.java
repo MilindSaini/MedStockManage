@@ -41,4 +41,13 @@ public interface RefreshTokenSessionRepository extends JpaRepository<RefreshToke
           AND r.revokedAt IS NULL
     """)
     int revokeToken(@Param("id") String id, @Param("userId") Long userId, @Param("now") Instant now);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+        UPDATE RefreshTokenSession r
+        SET r.revokedAt = :now
+        WHERE r.userId = :userId
+          AND r.revokedAt IS NULL
+    """)
+    int revokeAllActiveByUserId(@Param("userId") Long userId, @Param("now") Instant now);
 }
