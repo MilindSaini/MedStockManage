@@ -4,6 +4,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import AddMedicinePage from './pages/AddMedicinePage';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminStoresPage from './pages/AdminStoresPage';
 import AlertsPage from './pages/AlertsPage';
 import EmployeeDashboard from './pages/EmployeeDashboard';
 import EmployeesPage from './pages/EmployeesPage';
@@ -51,6 +52,17 @@ function App() {
               <>
                 <AppNavbar />
                 <AdminDashboard />
+              </>
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/admin/stores"
+          element={(
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
+              <>
+                <AppNavbar />
+                <AdminStoresPage />
               </>
             </ProtectedRoute>
           )}

@@ -12,7 +12,13 @@ export default function ProtectedRoute({ children, allowedRoles }) {
   const { isAuthenticated, roles, isAuthReady } = useAuth();
 
   if (!isAuthReady) {
-    return null;
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-200 flex items-center justify-center">
+        <div className="rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-sm">
+          Loading dashboard...
+        </div>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {

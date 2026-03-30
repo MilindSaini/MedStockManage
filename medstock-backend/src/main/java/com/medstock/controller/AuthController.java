@@ -6,13 +6,18 @@ import com.medstock.dto.auth.AuthResponse;
 import com.medstock.dto.auth.AuthUserResponse;
 import com.medstock.dto.auth.OwnerProfileRequest;
 import com.medstock.dto.auth.RefreshTokenRequest;
+import com.medstock.dto.auth.SendPhoneOtpRequest;
 import com.medstock.dto.auth.UpdateProfileRequest;
+import com.medstock.dto.auth.VerifyPhoneOtpRequest;
+import com.medstock.entity.User;
 import com.medstock.security.AuthCookieService;
 import com.medstock.security.UserPrincipal;
 import com.medstock.service.AuthService;
+import com.medstock.service.PhoneVerificationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,6 +41,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final AuthCookieService authCookieService;
+    private final PhoneVerificationService phoneVerificationService;
 
     @Value("${server.port:8080}")
     private String serverPort;
@@ -116,6 +122,38 @@ public class AuthController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
         }
         return ResponseEntity.ok(authService.updateProfile(principal.getUsername(), request));
+    }
+
+    @PostMapping("/phone/send-otp")
+    public ResponseEntity<Map<String, Object>> sendPhoneOtp(
+        @Valid @RequestBody(required = false) SendPhoneOtpRequest request,
+        Authentication authentication
+    ) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof UserPrincipal principal)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+        }
+
+        User user = authService.getActiveUserByIdentity(principal.getUsername());
+        var result = phoneVerificationService.sendOtp(user, request != null ? request.phone() : null);
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("accepted", result.accepted());
+        payload.put("to", result.to());
+        payload.put("reason", result.reason());
+        return ResponseEntity.ok(payload);
+    }
+
+    @PostMapping("/phone/verify-otp")
+    public ResponseEntity<AuthUserResponse> verifyPhoneOtp(
+        @Valid @RequestBody VerifyPhoneOtpRequest request,
+        Authentication authentication
+    ) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof UserPrincipal principal)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+        }
+
+        User user = authService.getActiveUserByIdentity(principal.getUsername());
+        phoneVerificationService.verifyOtp(user, request.otp());
+        return ResponseEntity.ok(authService.me(principal.getUsername()));
     }
 
     @GetMapping("/oauth2/google-url")

@@ -49,6 +49,20 @@ export default function AdminDashboard() {
         </div>
       </div>
       <p className="mt-2 text-slate-300">Admin can access all dashboards and permissions.</p>
+
+      <div className="mt-8 rounded-xl border border-slate-800 bg-slate-900/70 p-6">
+        <h2 className="text-xl font-semibold">Manage Other Stores</h2>
+        <p className="mt-2 text-sm text-slate-300">
+          Open a dedicated stores dashboard to see all stores and control their alert schedules.
+        </p>
+        <button
+          type="button"
+          className="mt-4 rounded-md border border-cyan-500/60 bg-cyan-500/20 px-4 py-2 text-sm font-medium text-cyan-200 hover:bg-cyan-500/30"
+          onClick={() => navigate('/admin/stores')}
+        >
+          Open Admin Stores Dashboard
+        </button>
+      </div>
     </div>
   );
 }

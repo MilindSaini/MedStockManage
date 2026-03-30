@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 
 export default function ProfilePage() {
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, refreshMe } = useAuth();
   const isOwner = user?.role === 'OWNER';
   const [form, setForm] = useState({
     storeName: user?.storeName || '',
@@ -11,6 +12,18 @@ export default function ProfilePage() {
     phone: user?.phone || '',
   });
   const [saving, setSaving] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [otpStatus, setOtpStatus] = useState(null);
+
+  useEffect(() => {
+    setForm({
+      storeName: user?.storeName || '',
+      fullName: user?.fullName || '',
+      phone: user?.phone || '',
+    });
+  }, [user]);
 
   function updateField(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -34,6 +47,53 @@ export default function ProfilePage() {
       toast.error(error.response?.data?.message || 'Could not update profile');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function onSendOtp() {
+    setSendingOtp(true);
+    setOtpStatus(null);
+    try {
+      const response = await axiosInstance.post('/api/auth/phone/send-otp', {
+        phone: form.phone,
+      });
+
+      if (response.data?.accepted === true) {
+        toast.success('OTP sent to phone');
+        setOtpStatus({ ok: true, message: `OTP sent to ${response.data?.to || 'your phone'}` });
+      } else {
+        const reason = response.data?.reason || 'unknown reason';
+        toast.error(`OTP not sent: ${reason}`);
+        setOtpStatus({ ok: false, message: `OTP not sent: ${reason}` });
+      }
+    } catch (error) {
+      const message = error.response?.data?.message || 'Could not send OTP';
+      toast.error(message);
+      setOtpStatus({ ok: false, message });
+    } finally {
+      setSendingOtp(false);
+    }
+  }
+
+  async function onVerifyOtp() {
+    if (!otp.trim()) {
+      toast.error('Enter OTP first');
+      return;
+    }
+
+    setVerifyingOtp(true);
+    try {
+      await axiosInstance.post('/api/auth/phone/verify-otp', { otp });
+      await refreshMe();
+      toast.success('Phone number verified');
+      setOtp('');
+      setOtpStatus({ ok: true, message: 'Phone verified successfully' });
+    } catch (error) {
+      const message = error.response?.data?.message || 'Could not verify OTP';
+      toast.error(message);
+      setOtpStatus({ ok: false, message });
+    } finally {
+      setVerifyingOtp(false);
     }
   }
 
@@ -92,6 +152,9 @@ export default function ProfilePage() {
               value={form.phone}
               onChange={(event) => updateField('phone', event.target.value)}
             />
+            <p className={`mt-1 text-xs ${user?.phoneVerified ? 'text-emerald-300' : 'text-amber-300'}`}>
+              {user?.phoneVerified ? 'Phone is verified' : 'Phone is not verified'}
+            </p>
           </div>
 
           <button
@@ -101,6 +164,46 @@ export default function ProfilePage() {
           >
             {saving ? 'Saving...' : 'Save Profile'}
           </button>
+
+          <div className="rounded-md border border-slate-700 bg-slate-950/50 p-3">
+            <div className="mb-2 text-sm font-medium text-slate-200">Phone Verification</div>
+            <div className="flex flex-col gap-2 md:flex-row">
+              <button
+                type="button"
+                className="rounded-md border border-cyan-500/60 bg-cyan-500/15 px-4 py-2 font-medium text-cyan-200 hover:bg-cyan-500/25 disabled:opacity-60"
+                disabled={sendingOtp}
+                onClick={onSendOtp}
+              >
+                {sendingOtp ? 'Sending OTP...' : 'Send OTP'}
+              </button>
+              <input
+                className="flex-1 rounded-md border border-slate-700 bg-slate-950 px-3 py-2"
+                placeholder="Enter OTP"
+                value={otp}
+                onChange={(event) => setOtp(event.target.value)}
+              />
+              <button
+                type="button"
+                className="rounded-md border border-emerald-500/60 bg-emerald-500/15 px-4 py-2 font-medium text-emerald-200 hover:bg-emerald-500/25 disabled:opacity-60"
+                disabled={verifyingOtp}
+                onClick={onVerifyOtp}
+              >
+                {verifyingOtp ? 'Verifying...' : 'Verify OTP'}
+              </button>
+            </div>
+
+            {otpStatus && (
+              <div className={`mt-2 rounded-md border px-3 py-2 text-sm ${otpStatus.ok ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300' : 'border-rose-500/50 bg-rose-500/10 text-rose-300'}`}>
+                {otpStatus.message}
+              </div>
+            )}
+          </div>
+
+          {!user?.phoneVerified && (
+            <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+              Verify phone to enable OTP-based phone verification.
+            </div>
+          )}
         </form>
       </div>
     </div>

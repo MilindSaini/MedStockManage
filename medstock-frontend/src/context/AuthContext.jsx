@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import axiosInstance, { registerUnauthorizedHandler } from '../api/axiosInstance';
 import { clearTokens, setTokens } from '../api/authTokenStore';
 
@@ -28,12 +28,26 @@ function readStoredUser() {
   }
 }
 
+function normalizeRoleName(role) {
+  if (typeof role !== 'string') {
+    return '';
+  }
+
+  const normalized = role.trim().toUpperCase();
+  if (!normalized) {
+    return '';
+  }
+
+  return normalized.startsWith('ROLE_') ? normalized.slice(5) : normalized;
+}
+
 function normalizeRoles(user) {
   if (Array.isArray(user?.roles) && user.roles.length > 0) {
-    return user.roles;
+    return [...new Set(user.roles.map(normalizeRoleName).filter(Boolean))];
   }
   if (user?.role) {
-    return [user.role];
+    const normalizedRole = normalizeRoleName(user.role);
+    return normalizedRole ? [normalizedRole] : [];
   }
   return [];
 }
@@ -50,6 +64,7 @@ export function AuthProvider({ children }) {
   const [user, setUserState] = useState(() => readStoredUser());
   const [activeRole, setActiveRole] = useState(() => localStorage.getItem(ACTIVE_ROLE_STORAGE_KEY));
   const [isAuthReady, setIsAuthReady] = useState(false);
+  const bootstrapStartedRef = useRef(false);
 
   function setAccessToken(nextAccessToken) {
     setAccessTokenState(nextAccessToken);
@@ -91,10 +106,25 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let cancelled = false;
 
+    if (bootstrapStartedRef.current) {
+      return () => {
+        cancelled = true;
+      };
+    }
+    bootstrapStartedRef.current = true;
+
     async function bootstrapSession() {
       const isOauthCallback = typeof window !== 'undefined'
         && new URLSearchParams(window.location.search).has('code');
       const hasSession = localStorage.getItem(HAS_SESSION_STORAGE_KEY) === 'true';
+
+      // If session is already fully restored from sessionStorage, avoid a redundant refresh call.
+      if (accessToken && user) {
+        if (!cancelled) {
+          setIsAuthReady(true);
+        }
+        return;
+      }
 
       if (isOauthCallback || !hasSession) {
         if (!cancelled) {
@@ -128,7 +158,7 @@ export function AuthProvider({ children }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [accessToken, user]);
 
   async function login(identifier, password) {
     const response = await axiosInstance.post('/api/auth/login', { identifier, password });

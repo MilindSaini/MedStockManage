@@ -1,21 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import useMedicines from '../hooks/useMedicines';
-
-function statusOf(medicine) {
-  const now = new Date();
-  const expiryDate = medicine.expiryDate ? new Date(medicine.expiryDate) : null;
-
-  if (medicine.currentStock === 0) return 'OUT_OF_STOCK';
-  if (expiryDate && expiryDate < now) return 'EXPIRED';
-  if (expiryDate) {
-    const days = (expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
-    if (days <= 7) return 'CRITICAL';
-    if (days <= 30) return 'WARNING';
-  }
-  if (medicine.currentStock <= medicine.lowStockThreshold) return 'LOW_STOCK';
-  return 'OK';
-}
+import { useQuery } from '@tanstack/react-query';
+import axiosInstance from '../api/axiosInstance';
 
 const ORDER = ['CRITICAL', 'EXPIRED', 'OUT_OF_STOCK', 'WARNING', 'LOW_STOCK'];
 
@@ -49,10 +35,16 @@ const STATUS_INFO = {
 
 export default function AlertsPage() {
   const navigate = useNavigate();
-  const { medicines, isLoading } = useMedicines({ size: 100, sortBy: 'updatedAt', sortDir: 'desc' });
+  const { data, isLoading } = useQuery({
+    queryKey: ['alerts', 'grouped'],
+    queryFn: async () => {
+      const response = await axiosInstance.get('/api/alerts/grouped');
+      return response.data;
+    },
+  });
 
   const grouped = useMemo(() => {
-    const acc = {
+    const fallback = {
       CRITICAL: [],
       EXPIRED: [],
       OUT_OF_STOCK: [],
@@ -60,15 +52,19 @@ export default function AlertsPage() {
       LOW_STOCK: [],
     };
 
-    medicines.forEach((medicine) => {
-      const status = statusOf(medicine);
-      if (status !== 'OK') {
-        acc[status].push(medicine);
-      }
-    });
+    const groups = data?.groups;
+    if (!groups || typeof groups !== 'object') {
+      return fallback;
+    }
 
-    return acc;
-  }, [medicines]);
+    return {
+      CRITICAL: groups.CRITICAL || [],
+      EXPIRED: groups.EXPIRED || [],
+      OUT_OF_STOCK: groups.OUT_OF_STOCK || [],
+      WARNING: groups.WARNING || [],
+      LOW_STOCK: groups.LOW_STOCK || [],
+    };
+  }, [data]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-8">

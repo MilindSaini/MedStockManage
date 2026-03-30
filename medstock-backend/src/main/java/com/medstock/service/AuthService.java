@@ -58,6 +58,7 @@ public class AuthService {
         user.setEmail(normalizedEmail);
         user.setFullName(null);
         user.setPhone(null);
+        user.setPhoneVerified(false);
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setRole("EMPLOYEE");
         user.setIsActive(true);
@@ -173,6 +174,7 @@ public class AuthService {
         user.setEmail(normalizedEmail);
         user.setFullName(null);
         user.setPhone(null);
+        user.setPhoneVerified(false);
         user.setPasswordHash(null);
         user.setRole("EMPLOYEE");
         user.setIsActive(true);
@@ -234,6 +236,8 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Phone number already in use");
         }
 
+        String previousPhone = normalizeNullable(user.getPhone());
+
         String normalizedStoreName = normalizeNullable(request.storeName());
         if (normalizedStoreName != null) {
             if (!RoleUtils.hasRole(user.getRole(), "OWNER")) {
@@ -252,6 +256,10 @@ public class AuthService {
 
         user.setFullName(normalizeNullable(request.fullName()));
         user.setPhone(normalizedPhone);
+        boolean phoneChanged = !java.util.Objects.equals(previousPhone, normalizedPhone);
+        if (phoneChanged) {
+            user.setPhoneVerified(false);
+        }
         user.setUpdatedAt(LocalDateTime.now());
         user = userRepository.save(user);
 
@@ -295,6 +303,14 @@ public class AuthService {
                 .orElse(null);
         }
         return AuthUserResponse.from(user, storeName);
+    }
+
+    public User getActiveUserByIdentity(String identity) {
+        String normalizedIdentity = normalizeIdentity(identity);
+        User user = userRepository.findByUsernameOrEmail(normalizedIdentity, normalizedIdentity)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        ensureUserActive(user);
+        return user;
     }
 
     private org.springframework.security.authentication.AuthenticationManager authenticationManager() {

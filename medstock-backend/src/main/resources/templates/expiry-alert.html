@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Medicine Expiry Alert</title>
+</head>
+<body style="font-family:Arial,sans-serif;background:#f8fafc;color:#0f172a;padding:24px;">
+  <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;">
+    <h2 style="margin:0 0 12px 0;">Expiry Alert - <span th:text="${storeName}">Store</span></h2>
+    <p>Hello <strong th:text="${fullName}">Team</strong>,</p>
+    <p th:text="${message}">Medicine expiry alert message</p>
+    <ul>
+      <li><strong>Medicine:</strong> <span th:text="${medicineName}">Medicine</span></li>
+      <li><strong>Status:</strong> <span th:text="${status}">CRITICAL</span></li>
+      <li><strong>Expiry:</strong> <span th:text="${expiryDate}">2026-03-28</span></li>
+      <li><strong>Current Stock:</strong> <span th:text="${currentStock}">10</span></li>
+    </ul>
+    <p>Please review this item in MedStock inventory alerts.</p>
+  </div>
+</body>
+</html>

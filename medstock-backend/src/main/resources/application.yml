@@ -84,6 +84,10 @@ medstock:
     mail-port: ${MEDSTOCK_MAIL_PORT}
     mail-username: ${MEDSTOCK_MAIL_USERNAME}
     mail-password: ${MEDSTOCK_MAIL_PASSWORD}
+    twilio-account-sid: ${MEDSTOCK_TWILIO_ACCOUNT_SID:}
+    twilio-auth-token: ${MEDSTOCK_TWILIO_AUTH_TOKEN:}
+    twilio-from-phone: ${MEDSTOCK_TWILIO_FROM_PHONE:}
+    twilio-from-whatsapp: ${MEDSTOCK_TWILIO_FROM_WHATSAPP:}
     server-port: ${MEDSTOCK_SERVER_PORT}
     aws-region: ${MEDSTOCK_AWS_REGION}
     aws-s3-bucket: ${MEDSTOCK_AWS_S3_BUCKET}
@@ -114,6 +118,14 @@ medstock:
       seed-password: ${medstock.env.admin-seed-password}
   cors:
     allowed-origins: ${medstock.env.cors-allowed-origins}
+  notifications:
+    alert-dedup-hours: ${MEDSTOCK_ALERT_DEDUP_HOURS:24}
+    default-country-code: ${MEDSTOCK_DEFAULT_COUNTRY_CODE:+91}
+    twilio:
+      account-sid: ${medstock.env.twilio-account-sid}
+      auth-token: ${medstock.env.twilio-auth-token}
+      from-phone: ${medstock.env.twilio-from-phone}
+      from-whatsapp: ${medstock.env.twilio-from-whatsapp}
 
 logging:
   level:

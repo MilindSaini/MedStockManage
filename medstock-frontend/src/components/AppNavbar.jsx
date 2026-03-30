@@ -5,6 +5,7 @@ const NAV_ITEMS = [
   { to: '/owner', label: 'Owner Dashboard', roles: ['OWNER'] },
   { to: '/employee', label: 'Employee Dashboard', roles: ['EMPLOYEE'] },
   { to: '/admin', label: 'Admin Dashboard', roles: ['ADMIN'] },
+  { to: '/admin/stores', label: 'Admin Stores', roles: ['ADMIN'] },
   { to: '/inventory', label: 'Inventory', roles: ['OWNER', 'EMPLOYEE'] },
   { to: '/inventory/add', label: 'Add Medicine', roles: ['OWNER', 'EMPLOYEE'] },
   { to: '/alerts', label: 'Alerts', roles: ['OWNER', 'EMPLOYEE'] },

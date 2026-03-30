@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Scheduled Alert Summary</title>
+</head>
+<body style="font-family:Arial,sans-serif;background:#f8fafc;color:#0f172a;padding:24px;">
+  <div style="max-width:760px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;">
+    <h2 style="margin:0 0 12px 0;">Alert Summary - <span th:text="${subjectLabel}">LOW_STOCK</span></h2>
+    <p>Hello <strong th:text="${fullName}">Team</strong>,</p>
+    <p>
+      Store: <strong th:text="${storeName}">Store</strong>
+    </p>
+    <p th:text="${intro}">Scheduled alert summary details.</p>
+
+    <table style="width:100%;border-collapse:collapse;font-size:14px;">
+      <thead>
+        <tr>
+          <th style="text-align:left;border-bottom:1px solid #cbd5e1;padding:8px;">Medicine</th>
+          <th style="text-align:left;border-bottom:1px solid #cbd5e1;padding:8px;">Status</th>
+          <th style="text-align:left;border-bottom:1px solid #cbd5e1;padding:8px;">Current Stock</th>
+          <th style="text-align:left;border-bottom:1px solid #cbd5e1;padding:8px;">Threshold</th>
+          <th style="text-align:left;border-bottom:1px solid #cbd5e1;padding:8px;">Expiry Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="item : ${items}">
+          <td style="border-bottom:1px solid #e2e8f0;padding:8px;" th:text="${item.medicineName}">Paracetamol</td>
+          <td style="border-bottom:1px solid #e2e8f0;padding:8px;" th:text="${item.status}">LOW_STOCK</td>
+          <td style="border-bottom:1px solid #e2e8f0;padding:8px;" th:text="${item.currentStock}">5</td>
+          <td style="border-bottom:1px solid #e2e8f0;padding:8px;" th:text="${item.threshold}">10</td>
+          <td style="border-bottom:1px solid #e2e8f0;padding:8px;" th:text="${item.expiryDate}">2026-03-30</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p style="margin-top:16px;">Check MedStock alerts page for action details.</p>
+  </div>
+</body>
+</html>

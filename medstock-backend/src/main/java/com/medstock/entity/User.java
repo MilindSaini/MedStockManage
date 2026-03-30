@@ -34,6 +34,9 @@ public class User {
 
     private String phone;
 
+    @Column(name = "phone_verified", nullable = false)
+    private Boolean phoneVerified = Boolean.FALSE;
+
     @Column(name = "password_hash")
     private String passwordHash;
 

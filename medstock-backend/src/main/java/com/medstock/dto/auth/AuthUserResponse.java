@@ -12,6 +12,7 @@ public record AuthUserResponse(
     String email,
     String fullName,
     String phone,
+    Boolean phoneVerified,
     String role,
     List<String> roles
 ) {
@@ -29,6 +30,7 @@ public record AuthUserResponse(
             user.getEmail(),
             user.getFullName(),
             user.getPhone(),
+            user.getPhoneVerified(),
             RoleUtils.primaryRole(roles),
             roles
         );
