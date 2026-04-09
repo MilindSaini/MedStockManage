@@ -3,8 +3,10 @@ import AppNavbar from './components/AppNavbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import AddMedicinePage from './pages/AddMedicinePage';
+import AdminActivityPage from './pages/AdminActivityPage';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminStoresPage from './pages/AdminStoresPage';
+import AdminUsersPage from './pages/AdminUsersPage';
 import AlertsPage from './pages/AlertsPage';
 import EmployeeDashboard from './pages/EmployeeDashboard';
 import EmployeesPage from './pages/EmployeesPage';
@@ -67,7 +69,28 @@ function App() {
             </ProtectedRoute>
           )}
         />
-
+        <Route
+          path="/admin/users"
+          element={(
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
+              <>
+                <AppNavbar />
+                <AdminUsersPage />
+              </>
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/admin/activity"
+          element={(
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
+              <>
+                <AppNavbar />
+                <AdminActivityPage />
+              </>
+            </ProtectedRoute>
+          )}
+        />
         <Route
           path="/inventory"
           element={(

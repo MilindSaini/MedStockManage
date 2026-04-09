@@ -8,6 +8,7 @@ import com.medstock.repository.StockTransactionRepository;
 import com.medstock.security.UserPrincipal;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ public class StockService {
     private final StockTransactionRepository stockTransactionRepository;
     private final PermissionGuard permissionGuard;
     private final BatchService batchService;
+    private final ActivityLogService activityLogService;
 
     @Transactional
     public StockAdjustResponse adjustStock(UserPrincipal principal, Long medicineId, Integer delta, String type, String notes) {
@@ -69,6 +71,19 @@ public class StockService {
         if (nextCurrentStock == 0) {
             batchService.onStockZero(savedMedicine.getId(), storeId);
         }
+
+        activityLogService.log(
+            principal.getId(),
+            storeId,
+            "STOCK_ADJUSTED",
+            "MEDICINE",
+            savedMedicine.getId(),
+            Map.of(
+                "delta", delta,
+                "transactionType", transaction.getTransactionType(),
+                "nextCurrentStock", nextCurrentStock
+            )
+        );
 
         return new StockAdjustResponse(
             savedMedicine.getId(),

@@ -8,7 +8,9 @@ import com.medstock.security.UserPrincipal;
 import jakarta.transaction.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -37,6 +39,7 @@ public class MedicineService {
 
     private final MedicineRepository medicineRepository;
     private final PermissionGuard permissionGuard;
+    private final ActivityLogService activityLogService;
 
     @Transactional
     public MedicineResponse addMedicine(UserPrincipal principal, MedicineUpsertRequest request) {
@@ -54,6 +57,14 @@ public class MedicineService {
         medicine.setUpdatedAt(now);
 
         Medicine saved = medicineRepository.save(medicine);
+        activityLogService.log(
+            principal.getId(),
+            storeId,
+            "MEDICINE_CREATED",
+            "MEDICINE",
+            saved.getId(),
+            metadata(saved)
+        );
         return MedicineResponse.from(saved);
     }
 
@@ -67,7 +78,17 @@ public class MedicineService {
         medicine.setUpdatedBy(principal.getId());
         medicine.setUpdatedAt(LocalDateTime.now());
 
-        return MedicineResponse.from(medicineRepository.save(medicine));
+        Medicine saved = medicineRepository.save(medicine);
+        activityLogService.log(
+            principal.getId(),
+            storeId,
+            "MEDICINE_UPDATED",
+            "MEDICINE",
+            saved.getId(),
+            metadata(saved)
+        );
+
+        return MedicineResponse.from(saved);
     }
 
     @Transactional
@@ -79,7 +100,15 @@ public class MedicineService {
         medicine.setIsDeleted(true);
         medicine.setUpdatedBy(principal.getId());
         medicine.setUpdatedAt(LocalDateTime.now());
-        medicineRepository.save(medicine);
+        Medicine saved = medicineRepository.save(medicine);
+        activityLogService.log(
+            principal.getId(),
+            storeId,
+            "MEDICINE_DELETED",
+            "MEDICINE",
+            saved.getId(),
+            metadata(saved)
+        );
     }
 
     public MedicineResponse getMedicineById(Long medicineId, UserPrincipal principal) {
@@ -201,5 +230,14 @@ public class MedicineService {
             return null;
         }
         return value.trim();
+    }
+
+    private Map<String, Object> metadata(Medicine medicine) {
+        Map<String, Object> metadata = new LinkedHashMap<>();
+        metadata.put("name", medicine.getName());
+        metadata.put("category", medicine.getCategory());
+        metadata.put("currentStock", medicine.getCurrentStock());
+        metadata.put("isDeleted", medicine.getIsDeleted());
+        return metadata;
     }
 }

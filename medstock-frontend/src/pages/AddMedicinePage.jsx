@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useLocation, useNavigate } from 'react-router-dom';
+import AiAutofillModal from '../components/AiAutofillModal';
 import useMedicines from '../hooks/useMedicines';
 import usePermissions from '../hooks/usePermissions';
 
@@ -83,6 +84,7 @@ export default function AddMedicinePage() {
   const [form, setForm] = useState(initialValues);
   const [touched, setTouched] = useState({});
   const [errors, setErrors] = useState({});
+  const [showAutofillModal, setShowAutofillModal] = useState(false);
   const { createMedicineMutation, updateMedicineMutation, deleteMedicineMutation } = useMedicines();
 
   const isEditing = Boolean(editingMedicine?.id);
@@ -374,10 +376,42 @@ export default function AddMedicinePage() {
     });
   }
 
+  function applyPrefill(data) {
+    const category = (data.category || '').trim();
+    const categoryFields = resolveCategoryFields(category);
+
+    setForm((prev) => ({
+      ...prev,
+      name: data.name || prev.name,
+      genericName: data.genericName || prev.genericName,
+      manufacturer: data.manufacturer || prev.manufacturer,
+      skuCode: data.skuCode || prev.skuCode,
+      unit: data.unit || prev.unit,
+      mrp: data.mrp && Number(data.mrp) > 0 ? Number(data.mrp) : prev.mrp,
+      purchasePrice: data.purchasePrice && Number(data.purchasePrice) > 0 ? Number(data.purchasePrice) : prev.purchasePrice,
+      lowStockThreshold: data.lowStockThreshold && Number(data.lowStockThreshold) >= 0
+        ? Number(data.lowStockThreshold)
+        : prev.lowStockThreshold,
+      categoryOption: categoryFields.categoryOption || prev.categoryOption,
+      customCategory: categoryFields.customCategory || prev.customCategory,
+    }));
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-8">
       <div className="mx-auto max-w-4xl">
-        <h1 className="text-3xl font-semibold">{isEditing ? 'Edit Medicine' : 'Add Medicine'}</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-3xl font-semibold">{isEditing ? 'Edit Medicine' : 'Add Medicine'}</h1>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="rounded-md border border-violet-500/70 bg-violet-500/20 px-3 py-2 text-sm font-medium text-violet-100 hover:bg-violet-500/30"
+              onClick={() => setShowAutofillModal(true)}
+            >
+              Photo Autofill
+            </button>
+          </div>
+        </div>
         <p className="mt-1 text-sm text-slate-300">Core inventory form with all medicine fields used in stock and alerts.</p>
 
         <form className="mt-6 grid gap-4 md:grid-cols-2" onSubmit={onSubmit} noValidate>
@@ -600,6 +634,17 @@ export default function AddMedicinePage() {
           </div>
         </form>
       </div>
+
+      {showAutofillModal ? (
+        <AiAutofillModal
+          onApply={(data) => {
+            applyPrefill(data);
+            setShowAutofillModal(false);
+            toast.success('AI autofill applied. You can edit fields before saving.');
+          }}
+          onClose={() => setShowAutofillModal(false)}
+        />
+      ) : null}
     </div>
   );
 }

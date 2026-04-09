@@ -50,17 +50,30 @@ export default function AdminDashboard() {
       </div>
       <p className="mt-2 text-slate-300">Admin can access all dashboards and permissions.</p>
 
-      <div className="mt-8 rounded-xl border border-slate-800 bg-slate-900/70 p-6">
-        <h2 className="text-xl font-semibold">Manage Other Stores</h2>
-        <p className="mt-2 text-sm text-slate-300">
-          Open a dedicated stores dashboard to see all stores and control their alert schedules.
-        </p>
+      <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <button
           type="button"
-          className="mt-4 rounded-md border border-cyan-500/60 bg-cyan-500/20 px-4 py-2 text-sm font-medium text-cyan-200 hover:bg-cyan-500/30"
+          className="rounded-lg border border-slate-700 bg-slate-900 p-4 text-left hover:border-slate-500"
+          onClick={() => navigate('/admin/users')}
+        >
+          <div className="font-medium">Users</div>
+          <div className="text-xs text-slate-400">Read-only paginated user directory</div>
+        </button>
+        <button
+          type="button"
+          className="rounded-lg border border-slate-700 bg-slate-900 p-4 text-left hover:border-slate-500"
           onClick={() => navigate('/admin/stores')}
         >
-          Open Admin Stores Dashboard
+          <div className="font-medium">Stores</div>
+          <div className="text-xs text-slate-400">Manage per-store alert schedules</div>
+        </button>
+        <button
+          type="button"
+          className="rounded-lg border border-slate-700 bg-slate-900 p-4 text-left hover:border-slate-500"
+          onClick={() => navigate('/admin/activity')}
+        >
+          <div className="font-medium">Activity</div>
+          <div className="text-xs text-slate-400">Platform-wide write action history</div>
         </button>
       </div>
     </div>

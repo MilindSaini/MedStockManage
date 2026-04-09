@@ -93,6 +93,11 @@ medstock:
     aws-s3-bucket: ${MEDSTOCK_AWS_S3_BUCKET}
     aws-access-key-id: ${MEDSTOCK_AWS_ACCESS_KEY_ID}
     aws-secret-access-key: ${MEDSTOCK_AWS_SECRET_ACCESS_KEY}
+    ai-provider: ${MEDSTOCK_AI_PROVIDER:}
+    gemini-api-key: ${MEDSTOCK_GEMINI_API_KEY:}
+    openai-api-key: ${MEDSTOCK_OPENAI_API_KEY:}
+    claude-api-key: ${MEDSTOCK_CLAUDE_API_KEY:}
+    ollama-base-url: ${MEDSTOCK_OLLAMA_BASE_URL:http://localhost:11434}
     jwt-issuer: ${MEDSTOCK_JWT_ISSUER}
     jwt-access-token-minutes: ${MEDSTOCK_JWT_ACCESS_TOKEN_MINUTES}
     jwt-refresh-token-days: ${MEDSTOCK_JWT_REFRESH_TOKEN_DAYS}
@@ -126,6 +131,12 @@ medstock:
       auth-token: ${medstock.env.twilio-auth-token}
       from-phone: ${medstock.env.twilio-from-phone}
       from-whatsapp: ${medstock.env.twilio-from-whatsapp}
+  ai:
+    provider: ${medstock.env.ai-provider}
+    gemini-api-key: ${medstock.env.gemini-api-key}
+    openai-api-key: ${medstock.env.openai-api-key}
+    claude-api-key: ${medstock.env.claude-api-key}
+    ollama-base-url: ${medstock.env.ollama-base-url}
 
 logging:
   level:

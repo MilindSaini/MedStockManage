@@ -16,6 +16,7 @@ import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Locale;
+import java.util.LinkedHashMap;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -37,6 +38,7 @@ public class AuthService {
     private final com.medstock.security.JwtUtil jwtUtil;
     private final RefreshTokenSessionService refreshTokenSessionService;
     private final OAuthLoginCodeService oAuthLoginCodeService;
+    private final ActivityLogService activityLogService;
 
     @Transactional
     public AuthResponse register(AuthRegisterRequest request) {
@@ -65,7 +67,16 @@ public class AuthService {
         user.setEmailVerified(false);
         user.setCreatedAt(now);
         user.setUpdatedAt(now);
-        userRepository.save(user);
+        user = userRepository.save(user);
+
+        activityLogService.log(
+            user.getId(),
+            user.getStoreId(),
+            "USER_REGISTERED",
+            "USER",
+            user.getId(),
+            Map.of("username", user.getUsername(), "email", user.getEmail())
+        );
 
         return issueTokens(user);
     }
@@ -220,6 +231,15 @@ public class AuthService {
         store.setUpdatedAt(now);
         storeRepository.save(store);
 
+        activityLogService.log(
+            user.getId(),
+            store.getId(),
+            "OWNER_PROFILE_COMPLETED",
+            "STORE",
+            store.getId(),
+            Map.of("storeName", store.getName())
+        );
+
         return toAuthUserResponse(user);
     }
 
@@ -262,6 +282,20 @@ public class AuthService {
         }
         user.setUpdatedAt(LocalDateTime.now());
         user = userRepository.save(user);
+
+        Map<String, Object> profileMetadata = new LinkedHashMap<>();
+        profileMetadata.put("fullName", user.getFullName());
+        profileMetadata.put("phone", user.getPhone());
+        profileMetadata.put("phoneVerified", Boolean.TRUE.equals(user.getPhoneVerified()));
+
+        activityLogService.log(
+            user.getId(),
+            user.getStoreId(),
+            "PROFILE_UPDATED",
+            "USER",
+            user.getId(),
+            profileMetadata
+        );
 
         return toAuthUserResponse(user);
     }

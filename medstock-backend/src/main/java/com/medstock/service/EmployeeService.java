@@ -17,6 +17,7 @@ import com.medstock.security.UserPrincipal;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ public class EmployeeService {
     private final EmployeePermissionRepository employeePermissionRepository;
     private final RefreshTokenSessionService refreshTokenSessionService;
     private final PermissionGuard permissionGuard;
+    private final ActivityLogService activityLogService;
 
     @Transactional
     public EmployeeResponse addEmployee(UserPrincipal principal, AddEmployeeRequest request) {
@@ -80,6 +82,15 @@ public class EmployeeService {
         invitation.setCreatedAt(now);
         invitation.setUpdatedAt(now);
         employeeInvitationRepository.save(invitation);
+
+        activityLogService.log(
+            principal.getId(),
+            storeId,
+            "EMPLOYEE_INVITED",
+            "USER",
+            invitedUser.getId(),
+            Map.of("username", invitedUser.getUsername())
+        );
 
         return EmployeeResponse.from(invitedUser, null);
     }
@@ -149,6 +160,15 @@ public class EmployeeService {
         invitation.setRespondedAt(now);
         invitation.setUpdatedAt(now);
         employeeInvitationRepository.save(invitation);
+
+        activityLogService.log(
+            principal.getId(),
+            invitation.getStoreId(),
+            accept ? "EMPLOYEE_INVITATION_ACCEPTED" : "EMPLOYEE_INVITATION_DECLINED",
+            "EMPLOYEE_INVITATION",
+            invitation.getId(),
+            Map.of("invitedUserId", principal.getId())
+        );
     }
 
     @Transactional
@@ -171,6 +191,15 @@ public class EmployeeService {
 
         employeePermissionRepository.deleteByStoreIdAndUserId(storeId, employeeUserId);
         refreshTokenSessionService.revokeAllActiveSessionsForUser(employeeUserId);
+
+        activityLogService.log(
+            principal.getId(),
+            storeId,
+            "EMPLOYEE_REMOVED",
+            "USER",
+            employeeUserId,
+            Map.of("username", employee.getUsername())
+        );
     }
 
     @Transactional
@@ -192,6 +221,21 @@ public class EmployeeService {
         applyPermissions(permission, payload);
         permission.setUpdatedAt(LocalDateTime.now());
         permission = employeePermissionRepository.save(permission);
+
+        activityLogService.log(
+            principal.getId(),
+            storeId,
+            "EMPLOYEE_PERMISSIONS_UPDATED",
+            "USER",
+            employeeUserId,
+            Map.of(
+                "canAdd", Boolean.TRUE.equals(permission.getCanAdd()),
+                "canEdit", Boolean.TRUE.equals(permission.getCanEdit()),
+                "canDelete", Boolean.TRUE.equals(permission.getCanDelete()),
+                "canViewFinance", Boolean.TRUE.equals(permission.getCanViewFinance()),
+                "canSell", Boolean.TRUE.equals(permission.getCanSell())
+            )
+        );
 
         return EmployeeResponse.from(employee, permission);
     }
