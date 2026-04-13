@@ -17,6 +17,7 @@ import com.medstock.service.PhoneVerificationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -32,11 +33,13 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Validated
 public class AuthController {
 
     private final AuthService authService;
@@ -65,7 +68,7 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refresh(
-        @RequestBody(required = false) RefreshTokenRequest request,
+        @Valid @RequestBody(required = false) RefreshTokenRequest request,
         HttpServletRequest servletRequest,
         HttpServletResponse response
     ) {
@@ -86,7 +89,7 @@ public class AuthController {
 
     @GetMapping("/oauth2/exchange")
     public ResponseEntity<AuthResponse> exchangeOauth2Code(
-        @RequestParam("code") String code,
+        @RequestParam("code") @NotBlank(message = "OAuth exchange code is required") String code,
         HttpServletResponse response
     ) {
         AuthResponse authResponse = authService.exchangeOAuthCode(code);

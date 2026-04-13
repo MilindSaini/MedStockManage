@@ -119,6 +119,20 @@ medstock:
       refresh-cookie-secure: ${medstock.env.jwt-refresh-cookie-secure}
       refresh-cookie-same-site: ${medstock.env.jwt-refresh-cookie-same-site}
       oauth2-success-redirect: ${medstock.env.oauth2-success-redirect}
+    rate-limit:
+      enabled: ${MEDSTOCK_AUTH_RATE_LIMIT_ENABLED:true}
+      register:
+        capacity: ${MEDSTOCK_AUTH_RATE_LIMIT_REGISTER_CAPACITY:5}
+        refill-seconds: ${MEDSTOCK_AUTH_RATE_LIMIT_REGISTER_REFILL_SECONDS:60}
+      login:
+        capacity: ${MEDSTOCK_AUTH_RATE_LIMIT_LOGIN_CAPACITY:10}
+        refill-seconds: ${MEDSTOCK_AUTH_RATE_LIMIT_LOGIN_REFILL_SECONDS:60}
+      refresh:
+        capacity: ${MEDSTOCK_AUTH_RATE_LIMIT_REFRESH_CAPACITY:20}
+        refill-seconds: ${MEDSTOCK_AUTH_RATE_LIMIT_REFRESH_REFILL_SECONDS:60}
+      oauth-exchange:
+        capacity: ${MEDSTOCK_AUTH_RATE_LIMIT_OAUTH_EXCHANGE_CAPACITY:10}
+        refill-seconds: ${MEDSTOCK_AUTH_RATE_LIMIT_OAUTH_EXCHANGE_REFILL_SECONDS:60}
     admin:
       seed-password: ${medstock.env.admin-seed-password}
   cors:
